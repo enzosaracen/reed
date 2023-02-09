@@ -7,9 +7,8 @@ typedef struct Field Field;
 struct Field {
 	int	m, size;
 	int	*log, *gol;
-	int	gen;
+	int	div;
 };
 
-int	_mult(Field *, int, int);
-Field	*init(int);
+Field	*init(int, int);
 int	mult(Field *, int, int);

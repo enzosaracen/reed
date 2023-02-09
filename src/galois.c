@@ -16,14 +16,14 @@ int _mult(Field *f, int v1, int v2)
 	for(i = f->m-2; i >= 0; i--) {
 		if(r & mask) {
 			r &= ~mask;
-			r ^= (f->gen << i);
+			r ^= (f->div << i);
 		}
 		mask >>= 1;
 	}
 	return r;
 }
 
-Field *init(int m)
+Field *init(int m, int div)
 {
 	int i, p;
 	Field *f;
@@ -33,9 +33,7 @@ Field *init(int m)
 	f->size = 1 << m;
 	f->log = malloc(f->size*sizeof(int));
 	f->gol = malloc(f->size*sizeof(int));
-
-	f->gen = 3;
-
+	f->div = div;
 	f->gol[0] = 1;
 	p = 2;
 	for(i = 1; i < f->size-1; i++) {
