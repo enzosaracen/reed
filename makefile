@@ -1,5 +1,5 @@
 CC = gcc
-CF = -Wall -Wextra
+CF = -Wall -Wextra -g
 HF = src/galois.h
 OF = reed
 OBJ = src/galois.o \
