@@ -1,6 +1,6 @@
 #include "galois.h"
 
-int _mult(Field *f, int v1, int v2)
+int _gmult(Field *f, int v1, int v2)
 {
 	int i, r, mask;
 
@@ -16,35 +16,42 @@ int _mult(Field *f, int v1, int v2)
 	for(i = f->m-2; i >= 0; i--) {
 		if(r & mask) {
 			r &= ~mask;
-			r ^= (f->div << i);
+			r ^= (f->prim << i);
 		}
 		mask >>= 1;
 	}
 	return r;
 }
 
-Field *init(int m, int div)
+Field *ginit(int m, int prim)
 {
 	int i, p;
 	Field *f;
 
 	f = malloc(sizeof(Field));
 	f->m = m;
-	f->size = 1 << m;
+	f->size = 1 << f->m;
 	f->log = malloc(f->size*sizeof(int));
 	f->gol = malloc(f->size*sizeof(int));
-	f->div = div;
+	f->prim = prim;
 	f->gol[0] = 1;
 	p = 2;
 	for(i = 1; i < f->size-1; i++) {
 		f->gol[i] = p;
 		f->log[p] = i;
-		p = _mult(f, p, 2);
+		p = _gmult(f, p, 2);
 	}
 	return f;
 }
 
-int mult(Field *f, int v1, int v2)
+int ginv(Field *f, int v)
+{
+	if(v == 0)
+		return 0;
+	return f->gol[(f->size-1 - f->log[v]) % (f->size-1)];
+}
+
+int gmult(Field *f, int v1, int v2)
 {
 	int r;
 
@@ -54,4 +61,9 @@ int mult(Field *f, int v1, int v2)
 	if(r >= f->size-1)
 		r -= f->size-1;
 	return f->gol[r];
+}
+
+int gdiv(Field *f, int v1, int v2)
+{
+	return gmult(f, v1, ginv(f, v2));
 }
