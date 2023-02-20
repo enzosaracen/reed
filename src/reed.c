@@ -46,24 +46,87 @@ void encode(Reed *r, int *msg)
 	int i, j, t;
 
 	for(i = 0; i < r->k; i++)
-		r->msg[(r->k + 2*r->t)-i-1] = msg[i];
-	for(i = r->k + 2*r->t - 1; i >= 2*r->t; i--) {
+		r->msg[2*r->t+i] = msg[i];
+	for(i = r->k+2*r->t-1; i >= 2*r->t; i--) {
 		t = gdiv(r->f, r->msg[i], r->gen[2*r->t]);
 		for(j = 2*r->t; j >= 0; j--)
 			r->msg[i - (2*r->t-j)] ^= gmult(r->f, r->gen[j], t);
 	}
 	for(i = 0; i < r->k; i++)
-		r->msg[(r->k + 2*r->t)-i-1] = msg[i];
+		r->msg[2*r->t+i] = msg[i];
+}
+
+int *berlekamp(Reed *r, int *s)
+{
+	int *c, d, *pc, *tmp, pd, l, n, m, i;
+
+	c = calloc(2*r->t, sizeof(int));
+	pc = calloc(2*r->t, sizeof(int));
+	tmp = calloc(2*r->t, sizeof(int));
+	l = 0;
+	c[0] = pc[0] = pd = m = 1;
+
+	for(n = 0; n < 2*r->t; n++) {
+		d = s[n];
+		for(i = 1; i <= l; i++)
+			d ^= gmult(r->f, s[n-m], c[m]);
+		if(d == 0)
+			m++;
+		else if(n >= 2*l) {
+			for(i = 0; i < 2*r->t; i++)
+				tmp[i] = c[i];
+			for(i = 0; i < 2*r->t-m; i++)
+				c[i+m] ^= gmult(r->f, gdiv(r->f, d, pd), pc[i]);
+			for(i = 0; i < 2*r->t; i++)
+				pc[i] = tmp[i];
+			l = n+1 - l;
+			pd = d;
+			m = 1;
+		} else {
+			for(i = 0; i < 2*r->t-m; i++)
+				c[i+m] ^= gmult(r->f, gdiv(r->f, d, pd), pc[i]);
+			m++;
+		}
+	}
+	free(pc);
+	free(tmp);
+	return c;
+}
+
+void decode(Reed *r)
+{
+	int *s, i, j, *c;
+
+	s = malloc(2*r->t*sizeof(int));
+	for(i = 0; i < 2*r->t; i++) {
+		s[i] = r->msg[r->n];
+		for(j = r->n-1; j >= 0; j--) {
+			s[i] = gmult(r->f, s[i], r->f->gol[i]);
+			s[i] ^= r->msg[j];
+		}
+	}
+	c = berlekamp(r, s);
+	printf("berlekamp: ");
+	for(i = 0; i < 2*r->t; i++)
+		printf("%d ", c[i]);
+	printf("\n");
 }
 
 int main(void)
 {
-	int i, msg[11] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+	int i, msg[11] = {11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
 	Reed *r;
 
 	r = reed(4, 11, PRIM4);
 	encode(r, msg);
+	printf("sent:\t\t");
 	for(i = 2*r->t+r->k-1; i >= 0; i--)
 		printf("%d ", r->msg[i]);
 	printf("\n");
+	r->msg[8] = 11;
+	printf("received:\t");
+	for(i = 2*r->t+r->k-1; i >= 0; i--)
+		printf("%d ", r->msg[i]);
+	printf("\n");
+	decode(r);
 }
