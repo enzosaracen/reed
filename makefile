@@ -1,9 +1,11 @@
 CC = gcc
 CF = -Wall -Wextra -g
-HF = src/galois.h
-OF = reed
+HF = src/rain.h
+OF = rain
 OBJ = src/galois.o \
-      src/reed.o
+      src/disk.o \
+      src/rain.o \
+      src/reed.o \
 
 %.o:	%.c $(HF)
 	$(CC) -c $< -o $@ $(CF)

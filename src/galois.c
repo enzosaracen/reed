@@ -1,4 +1,4 @@
-#include "galois.h"
+#include "rain.h"
 
 int _gmult(Field *f, int v1, int v2)
 {

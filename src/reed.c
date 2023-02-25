@@ -1,32 +1,4 @@
-#include "galois.h"
-
-#define GF	8
-#define PRIM	0b11101
-
-typedef struct Reed Reed;
-struct Reed {
-	Field	*f;
-	int	n, m;
-	int	**van;
-	FILE	**disk;
-};
-
-Reed *reed(int n, int m, FILE **disk)
-{
-	Reed *r;
-
-	r = malloc(sizeof(Reed));
-	r->f = ginit(GF, PRIM);
-	if(n+m >= r->f->size) {
-		fprintf(stderr, "disk count exceeds %d\n", r->f->size-1);
-		exit(1);
-	}
-	r->n = n;
-	r->m = m;
-	r->disk = disk;
-	r->van = NULL;
-	return r;
-}
+#include "rain.h"
 
 void swap(int n, int *r1, int *r2)
 {
@@ -39,14 +11,12 @@ void swap(int n, int *r1, int *r2)
 
 void van(Reed *r)
 {
-	int i, j;
+	int i, j, k, t;
 
-	if(r->van != NULL)
-		return;
 	r->van = malloc((r->n+r->m)*sizeof(int*));
 	for(i = 0; i < r->n+r->m; i++) {
 		r->van[i] = malloc(r->n*sizeof(int));
-		r->van[i][0] = i > 0 ? 1 : 0;
+		r->van[i][0] = 1;
 		for(j = 1; j < r->n; j++)
 			r->van[i][j] = gmult(r->f, r->van[i][j-1], i);
 	}
@@ -56,35 +26,62 @@ void van(Reed *r)
 				if(r->van[j][i] != 0)
 					break;
 			swap(r->n, r->van[i], r->van[j]);
-								
+		}
+		t = ginv(r->f, r->van[i][i]);
+		for(j = 0; j < r->n+r->m; j++)
+			r->van[j][i] = gmult(r->f, r->van[j][i], t);
+		for(j = 0; j < r->n; j++) {
+			t = r->van[i][j];
+			if(j == i || r->van[i][j] == 0)
+				continue;
+			for(k = 0; k < r->n+r->m; k++)
+				r->van[k][j] ^= gmult(r->f, r->van[k][i], t);
 		}
 	}
 }
 
-void check(Reed *r)
+Reed *reed(int n, int m, Disk **disk)
 {
+	int i;
+	Reed *r;
+
+	r = malloc(sizeof(Reed));
+	r->f = ginit(GF, PR);
+	if(n+m >= r->f->size) {
+		fprintf(stderr, "disk count exceeds %d\n", r->f->size-1);
+		exit(1);
+	}
+	r->n = n;
+	r->m = m;
+	r->disk = disk;
+	for(i = 0; i < r->n; i++)
+		dopen(disk[i], READ);
+	for(i = r->n; i < r->n+r->m; i++)
+		dopen(disk[i], WRITE);
 	van(r);
+	return r;
 }
 
-int main(void)
+void check(Reed *r)
 {
-	int i, j;
-	Reed *r;
-	FILE *d[6];
-	char s[3];
+	int i, j, *c, s;
 
-	s[0] = 'd';
-	s[1] = '0';
-	s[2] = 0;
-	for(i = 0; i < 6; i++) {
-		d[i] = fopen(s, "w");
-		s[1]++;
-	}
-	r = reed(3, 3, d);
-	check(r);
-	for(i = 0; i < r->n+r->m; i++) {
-		for(j = 0; j < r->n; j++)
-			printf("%d ", r->van[i][j]);
-		printf("\n");
+	c = malloc(r->n*sizeof(int));
+	for(;;) {
+		for(i = 0; i < r->n; i++)
+			c[i] = dget(r->disk[i]);
+		for(i = r->n; i < r->n+r->m; i++) {
+			s = 0;
+			for(j = 0; j < r->n; j++) {
+				if(c[j] == EOF) {
+					for(i = r->n; i < r->n+r->m; i++)
+						dflush(r->disk[i]);
+					free(c);
+					return;
+				}
+				s ^= gmult(r->f, r->van[i][j], c[j]);
+			}
+			dput(r->disk[i], s);
+		}
 	}
 }
