@@ -68,19 +68,19 @@ void check(Reed *r)
 
 	c = malloc(r->n*sizeof(int));
 	for(;;) {
-		for(i = 0; i < r->n; i++)
+		for(i = 0; i < r->n; i++) {
 			c[i] = dget(r->disk[i]);
+			if(c[i] == EOF) {
+				for(i = r->n; i < r->n+r->m; i++)
+					dflush(r->disk[i]);
+				free(c);
+				return;
+			}
+		}
 		for(i = r->n; i < r->n+r->m; i++) {
 			s = 0;
-			for(j = 0; j < r->n; j++) {
-				if(c[j] == EOF) {
-					for(i = r->n; i < r->n+r->m; i++)
-						dflush(r->disk[i]);
-					free(c);
-					return;
-				}
+			for(j = 0; j < r->n; j++)
 				s ^= gmult(r->f, r->van[i][j], c[j]);
-			}
 			dput(r->disk[i], s);
 		}
 	}
