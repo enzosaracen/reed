@@ -1,4 +1,26 @@
-#include "rain.h"
+#include "raid.h"
+
+Reed *reed(int n, int m, Disk **disk)
+{
+	int i;
+	Reed *r;
+
+	r = malloc(sizeof(Reed));
+	r->f = ginit(GF, PR);
+	if(n+m >= r->f->size) {
+		fprintf(stderr, "disk count exceeds %d\n", r->f->size-1);
+		exit(1);
+	}
+	r->n = n;
+	r->m = m;
+	r->disk = disk;
+	for(i = 0; i < r->n; i++)
+		dopen(disk[i], "rb");
+	for(i = r->n; i < r->n+r->m; i++)
+		dopen(disk[i], "wb");
+	van(r);
+	return r;
+}
 
 void swap(int n, int *r1, int *r2)
 {
@@ -40,28 +62,6 @@ void van(Reed *r)
 	}
 }
 
-Reed *reed(int n, int m, Disk **disk)
-{
-	int i;
-	Reed *r;
-
-	r = malloc(sizeof(Reed));
-	r->f = ginit(GF, PR);
-	if(n+m >= r->f->size) {
-		fprintf(stderr, "disk count exceeds %d\n", r->f->size-1);
-		exit(1);
-	}
-	r->n = n;
-	r->m = m;
-	r->disk = disk;
-	for(i = 0; i < r->n; i++)
-		dopen(disk[i], READ);
-	for(i = r->n; i < r->n+r->m; i++)
-		dopen(disk[i], WRITE);
-	van(r);
-	return r;
-}
-
 void check(Reed *r)
 {
 	int i, j, *c, s;
@@ -84,4 +84,26 @@ void check(Reed *r)
 			dput(r->disk[i], s);
 		}
 	}
+}
+
+void fix(Reed *r)
+{
+	int i, j, k, **mat;
+
+	j = 0;
+	mat = malloc(sizeof(int*)*r->n);
+	for(i = 0; i < r->n+r->m; i++)
+		if(!r->disk[i]->bad) {
+			mat[j] = calloc(2*r->n, sizeof(int));
+			for(k = 0; k < r->n; k++)
+				mat[j][k] = r->van[i][k];
+			if(++j >= r->n)
+				break;
+		}
+	if(j < r->n) {
+		fprintf(stderr, "errors exceed %d\n", r->m);
+		exit(1);
+	}
+	for(i = 0; i < r->n; i++)
+		mat[i][r->n+i] = 1;
 }

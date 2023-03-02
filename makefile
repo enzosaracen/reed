@@ -1,11 +1,11 @@
 CC = gcc
 CF = -Wall -Wextra -g
-HF = src/rain.h
-OF = rain
+HF = src/raid.h
+OF = raid
 OBJ = src/galois.o \
       src/disk.o \
-      src/rain.o \
       src/reed.o \
+      src/cmd.o \
 
 %.o:	%.c $(HF)
 	$(CC) -c $< -o $@ $(CF)

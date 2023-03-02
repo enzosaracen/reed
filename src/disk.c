@@ -1,27 +1,27 @@
-#include "rain.h"
+#include "raid.h"
 
 Disk *dnew(char *name)
 {
 	Disk *d;
 
 	d = malloc(sizeof(Disk));
-	d->n = d->mode = 0;
+	d->n = 0;
 	d->name = name;
 	d->f = NULL;
 	d->p = d->buf;
+	d->bad = 0;
 	return d;
 }
 
-void dopen(Disk *d, int mode)
+void dopen(Disk *d, char *mode)
 {
 	if(d->f != NULL)
 		fclose(d->f);
-	d->f = fopen(d->name, mode == READ ? "rb" : "wb");
+	d->f = fopen(d->name, mode);
 	if(d->f == NULL) {
 		fprintf(stderr, "cannot open file '%s'\n", d->name);
 		exit(1);
 	}
-	d->mode = mode;
 }
 
 void dput(Disk *d, char c)

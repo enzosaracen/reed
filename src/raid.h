@@ -5,8 +5,6 @@
 
 #define GF	8
 #define PR	0b11101
-#define	READ	1
-#define WRITE	2
 
 typedef struct Field Field;
 typedef struct Reed Reed;
@@ -28,7 +26,7 @@ struct Reed {
 struct Disk {
 	FILE	*f;
 	char	buf[BUFSIZ], *p, *name;
-	int	n, mode;
+	int	n, bad;
 };
 
 /*
@@ -40,18 +38,18 @@ int	gmult(Field *, int, int);
 int	gdiv(Field *, int, int);
 
 /*
+ *	disk.c
+ */
+Disk	*dnew(char *);
+void	dopen(Disk *, char *);
+void	dput(Disk *, char);
+void	dflush(Disk *);
+int	dget(Disk *);
+
+/*
  *	reed.c
  */
 void	swap(int, int *, int *);
 void	van(Reed *);
 Reed	*reed(int, int, Disk **);
 void	check(Reed *);
-
-/*
- *	disk.c
- */
-Disk	*dnew(char *);
-void	dopen(Disk *, int);
-void	dput(Disk *, char);
-void	dflush(Disk *);
-int	dget(Disk *);
