@@ -31,6 +31,12 @@ void swap(int n, int *r1, int *r2)
 	}
 }
 
+void addrow(Reed *r, int n, int *r1, int *r2, int m)
+{
+	while(n--)
+		r1[n] ^= gmult(r->f, r2[n], m);
+}
+
 void van(Reed *r)
 {
 	int i, j, k, t;
@@ -62,6 +68,34 @@ void van(Reed *r)
 	}
 }
 
+void matinv(Reed *r, int **mat)
+{
+	int i, j;	
+
+loop:
+	for(i = 0; i < r->n; i++) {
+		if(mat[i][i] == 0)
+			for(j = 0; j < r->n; j++)
+				if(mat[j][i] > 0) {
+					addrow(r, 2*r->n, mat[i], mat[j], 1);
+					break;
+				}
+		for(j = 0; j < r->n; j++)
+			if(j != i && mat[j][i] != 0)
+				addrow(r, 2*r->n, mat[j], mat[i], gdiv(r->f, mat[j][i], mat[i][i]));
+		if(mat[i][i] != 1)
+			addrow(r, 2*r->n, mat[i], mat[i], gdiv(r->f, 1^mat[i][i], mat[i][i]));
+	}
+	for(i = 0; i < r->n; i++)
+		for(j = 0; j < r->n; j++) {
+			if(i == j) {
+				if(mat[i][i] != 1)
+					goto loop;
+			} else if(mat[i][j] != 0)
+				goto loop;
+		}
+}
+
 void check(Reed *r)
 {
 	int i, j, *c, s;
@@ -86,40 +120,17 @@ void check(Reed *r)
 	}
 }
 
-void addrow(Reed *r, int n, int *r1, int *r2, int m)
-{
-	while(n--)
-		r1[n] ^= gmult(r->f, r2[n], m);
-}
-
-void matinv(Reed *r, int **mat)
-{
-	int i, j;	
-
-	for(i = 0; i < r->n; i++) {
-		if(mat[i][i] == 0)
-			for(j = 0; j < r->n; j++)
-				if(mat[j][i] > 0)
-					addrow(r, 2*r->n, mat[i], mat[j], 1);
-		for(j = i+1; j < r->n; j++)
-			if(mat[j][i] != 0)
-				addrow(r, 2*r->n, mat[j], mat[i], gdiv(r->f, mat[j][i], mat[i][i]));
-	}
-	for(i = r->n-1; i >= 0; i--) {
-		
-	}
-
-
-}
-
 void fix(Reed *r)
 {
-	int i, j, k, **mat;
+	int i, j, k, **mat, *c;
+	Disk **good;
 
 	j = 0;
+	good = malloc(sizeof(Disk*)*r->n);
 	mat = malloc(sizeof(int*)*r->n);
 	for(i = 0; i < r->n+r->m; i++)
 		if(!r->disk[i]->bad) {
+			good[j] = r->disk[i];
 			mat[j] = calloc(2*r->n, sizeof(int));
 			for(k = 0; k < r->n; k++)
 				mat[j][k] = r->van[i][k];
@@ -133,4 +144,18 @@ void fix(Reed *r)
 	for(i = 0; i < r->n; i++)
 		mat[i][r->n+i] = 1;
 	matinv(r, mat);
+	c = malloc(sizeof(int)*r->n);
+	for(;;) {
+		for(i = 0; i < r->n; i++) {
+			c[i] = dget(good[i]);
+			if(c[i] == EOF)
+				return;
+		}
+		for(i = 0; i < r->n; i++) {
+			k = 0;
+			for(j = 0; j < r->n; j++)
+				k ^= gmult(r->f, mat[i][j+r->n], c[j]);
+			printf("d%d: %d\n", i, k);
+		}
+	}
 }

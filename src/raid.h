@@ -49,7 +49,10 @@ int	dget(Disk *);
 /*
  *	reed.c
  */
-void	swap(int, int *, int *);
-void	van(Reed *);
 Reed	*reed(int, int, Disk **);
+void	swap(int, int *, int *);
+void	addrow(Reed *, int, int *, int *, int);
+void	van(Reed *);
+void	matinv(Reed *, int **);
 void	check(Reed *);
+void	fix(Reed *);

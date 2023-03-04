@@ -5,7 +5,7 @@
 
 int main(void)
 {
-	int i, j;
+	int i;
 	Reed *r;
 	Disk *d[N+M];
 	char name[16];
@@ -15,10 +15,10 @@ int main(void)
 		d[i] = dnew(strdup(name));
 	}
 	r = reed(N, M, d);
-	for(i = 0; i < N+M; i++) {
-		for(j = 0; j < N; j++)
-			printf("%d\t", r->van[i][j]);
-		printf("\n");
-	}
 	check(r);
+	for(i = N; i < N+M; i++)
+		dopen(d[i], "rb");
+	for(i = 0; i < M; i++)
+		r->disk[i]->bad = 1;
+	fix(r);
 }
