@@ -2,7 +2,6 @@
 
 Reed *reed(int n, int m, Disk **disk)
 {
-	int i;
 	Reed *r;
 
 	r = malloc(sizeof(Reed));
@@ -14,10 +13,6 @@ Reed *reed(int n, int m, Disk **disk)
 	r->n = n;
 	r->m = m;
 	r->disk = disk;
-	for(i = 0; i < r->n; i++)
-		dopen(disk[i], "rb");
-	for(i = r->n; i < r->n+r->m; i++)
-		dopen(disk[i], "wb");
 	van(r);
 	return r;
 }
@@ -31,7 +26,7 @@ void swap(int n, int *r1, int *r2)
 	}
 }
 
-void addrow(Reed *r, int n, int *r1, int *r2, int m)
+void add(Reed *r, int n, int *r1, int *r2, int m)
 {
 	while(n--)
 		r1[n] ^= gmult(r->f, r2[n], m);
@@ -68,7 +63,7 @@ void van(Reed *r)
 	}
 }
 
-void matinv(Reed *r, int **mat)
+void inv(Reed *r, int **mat)
 {
 	int i, j;	
 
@@ -77,14 +72,14 @@ loop:
 		if(mat[i][i] == 0)
 			for(j = 0; j < r->n; j++)
 				if(mat[j][i] > 0) {
-					addrow(r, 2*r->n, mat[i], mat[j], 1);
+					add(r, 2*r->n, mat[i], mat[j], 1);
 					break;
 				}
 		for(j = 0; j < r->n; j++)
 			if(j != i && mat[j][i] != 0)
-				addrow(r, 2*r->n, mat[j], mat[i], gdiv(r->f, mat[j][i], mat[i][i]));
+				add(r, 2*r->n, mat[j], mat[i], gdiv(r->f, mat[j][i], mat[i][i]));
 		if(mat[i][i] != 1)
-			addrow(r, 2*r->n, mat[i], mat[i], gdiv(r->f, 1^mat[i][i], mat[i][i]));
+			add(r, 2*r->n, mat[i], mat[i], gdiv(r->f, 1^mat[i][i], mat[i][i]));
 	}
 	for(i = 0; i < r->n; i++)
 		for(j = 0; j < r->n; j++) {
@@ -98,26 +93,46 @@ loop:
 
 void check(Reed *r)
 {
-	int i, j, *c, s;
+	int i, j, k, *c;
 
 	c = malloc(r->n*sizeof(int));
+	for(i = 0; i < r->n; i++) {
+		if(r->disk[i]->bad) {
+			fprintf(stderr, "cannot make check with missing data\n");
+			exit(1);
+		}
+		dopen(r->disk[i], "rb");
+	}
+	k = 0;
+	for(i = r->n; i < r->n+r->m; i++)
+		if(r->disk[i]->bad) {
+			k = 1;
+			dopen(r->disk[i], "wb");
+		}
+	if(k == 0)
+		return;
 	for(;;) {
 		for(i = 0; i < r->n; i++) {
 			c[i] = dget(r->disk[i]);
-			if(c[i] == EOF) {
-				for(i = r->n; i < r->n+r->m; i++)
-					dflush(r->disk[i]);
-				free(c);
-				return;
-			}
+			if(c[i] == EOF)
+				goto end;
 		}
 		for(i = r->n; i < r->n+r->m; i++) {
-			s = 0;
+			if(!r->disk[i]->bad)
+				continue;
+			k = 0;
 			for(j = 0; j < r->n; j++)
-				s ^= gmult(r->f, r->van[i][j], c[j]);
-			dput(r->disk[i], s);
+				k ^= gmult(r->f, r->van[i][j], c[j]);
+			dput(r->disk[i], k);
 		}
 	}
+end:
+	for(i = r->n; i < r->n+r->m; i++)
+		if(r->disk[i]->bad) {
+			r->disk[i]->bad = 0;
+			dflush(r->disk[i]);
+		}
+	free(c);
 }
 
 void fix(Reed *r)
@@ -131,6 +146,7 @@ void fix(Reed *r)
 	for(i = 0; i < r->n+r->m; i++)
 		if(!r->disk[i]->bad) {
 			good[j] = r->disk[i];
+			dopen(good[j], "rb");
 			mat[j] = calloc(2*r->n, sizeof(int));
 			for(k = 0; k < r->n; k++)
 				mat[j][k] = r->van[i][k];
@@ -141,21 +157,37 @@ void fix(Reed *r)
 		fprintf(stderr, "errors exceed %d\n", r->m);
 		exit(1);
 	}
-	for(i = 0; i < r->n; i++)
+	for(i = 0; i < r->n; i++) {
+		if(r->disk[i]->bad)
+			dopen(r->disk[i], "wb");
 		mat[i][r->n+i] = 1;
-	matinv(r, mat);
+	}
+	inv(r, mat);
+
 	c = malloc(sizeof(int)*r->n);
 	for(;;) {
 		for(i = 0; i < r->n; i++) {
 			c[i] = dget(good[i]);
 			if(c[i] == EOF)
-				return;
+				goto end;
 		}
 		for(i = 0; i < r->n; i++) {
+			if(!r->disk[i]->bad)
+				continue;
 			k = 0;
 			for(j = 0; j < r->n; j++)
 				k ^= gmult(r->f, mat[i][j+r->n], c[j]);
-			printf("d%d: %d\n", i, k);
+			dput(r->disk[i], k);
 		}
 	}
+end:
+	for(i = 0; i < r->n; i++)
+		if(r->disk[i]->bad) {
+			r->disk[i]->bad = 0;
+			dflush(r->disk[i]);
+		}
+	free(mat);
+	free(c);
+	free(good);
+	check(r);
 }

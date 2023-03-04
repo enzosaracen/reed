@@ -5,11 +5,9 @@ Disk *dnew(char *name)
 	Disk *d;
 
 	d = malloc(sizeof(Disk));
-	d->n = 0;
 	d->name = name;
-	d->f = NULL;
-	d->p = d->buf;
 	d->bad = 0;
+	d->f = NULL;
 	return d;
 }
 
@@ -17,6 +15,8 @@ void dopen(Disk *d, char *mode)
 {
 	if(d->f != NULL)
 		fclose(d->f);
+	d->n = 0;
+	d->p = d->buf;
 	d->f = fopen(d->name, mode);
 	if(d->f == NULL) {
 		fprintf(stderr, "cannot open file '%s'\n", d->name);
@@ -36,6 +36,7 @@ void dput(Disk *d, char c)
 void dflush(Disk *d)
 {
 	fwrite(d->buf, 1, d->p-d->buf, d->f);
+	d->p = d->buf;
 }
 
 int dget(Disk *d)

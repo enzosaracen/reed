@@ -51,8 +51,8 @@ int	dget(Disk *);
  */
 Reed	*reed(int, int, Disk **);
 void	swap(int, int *, int *);
-void	addrow(Reed *, int, int *, int *, int);
+void	add(Reed *, int, int *, int *, int);
 void	van(Reed *);
-void	matinv(Reed *, int **);
+void	inv(Reed *, int **);
 void	check(Reed *);
 void	fix(Reed *);
