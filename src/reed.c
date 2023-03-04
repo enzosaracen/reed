@@ -86,6 +86,32 @@ void check(Reed *r)
 	}
 }
 
+void addrow(Reed *r, int n, int *r1, int *r2, int m)
+{
+	while(n--)
+		r1[n] ^= gmult(r->f, r2[n], m);
+}
+
+void matinv(Reed *r, int **mat)
+{
+	int i, j;	
+
+	for(i = 0; i < r->n; i++) {
+		if(mat[i][i] == 0)
+			for(j = 0; j < r->n; j++)
+				if(mat[j][i] > 0)
+					addrow(r, 2*r->n, mat[i], mat[j], 1);
+		for(j = i+1; j < r->n; j++)
+			if(mat[j][i] != 0)
+				addrow(r, 2*r->n, mat[j], mat[i], gdiv(r->f, mat[j][i], mat[i][i]));
+	}
+	for(i = r->n-1; i >= 0; i--) {
+		
+	}
+
+
+}
+
 void fix(Reed *r)
 {
 	int i, j, k, **mat;
@@ -106,4 +132,5 @@ void fix(Reed *r)
 	}
 	for(i = 0; i < r->n; i++)
 		mat[i][r->n+i] = 1;
+	matinv(r, mat);
 }
