@@ -37,17 +37,6 @@ void van(Reed *r)
 	int i, j, k, t;
 
 	r->van = malloc((r->n+r->m)*sizeof(int*));
-	for(i = 0; i < r->n; i++) {
-		r->van[i] = calloc(r->n, sizeof(int));
-		r->van[i][i] = 1;
-	}
-	for(i = r->n; i < r->n+r->m; i++) {
-		r->van[i] = malloc(sizeof(r->n*sizeof(int)));
-		r->van[i][0] = 1;
-		for(j = 1; j < r->n; j++)
-			r->van[i][j] = gmult(r->f, r->van[i][j-1], i);
-	}
-	/*
 	for(i = 0; i < r->n+r->m; i++) {
 		r->van[i] = malloc(r->n*sizeof(int));
 		r->van[i][0] = 1;
@@ -71,7 +60,7 @@ void van(Reed *r)
 			for(k = 0; k < r->n+r->m; k++)
 				r->van[k][j] ^= gmult(r->f, r->van[k][i], t);
 		}
-	}*/
+	}
 }
 
 void inv(Reed *r, int **mat)

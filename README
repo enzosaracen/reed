@@ -1,5 +1,13 @@
 n-ary raid prototype using reed solomon coding
 
+calling `./raid [n] [m] [all files]`, where `[all files]` consists of n*m paths will overwrite
+the last m files with check data to reconstruct up to m of the n*m files in case of failure
+
+calling `./raid [n] [m] [all files] [bad files]`, where `[bad files]` additionally consists of
+up to m of the paths in `[all files]` will write the reconstructed data to those files
+
+test multiple `[n] [m]` combinations with `./fuzz.sh`
+
 see:
 	http://alamos.math.arizona.edu/RTG16/ECC/raid6.pdf
 	https://web.eecs.utk.edu/~jplank/plank/papers/CS-03-504.pdf
