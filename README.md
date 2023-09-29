@@ -1,7 +1,7 @@
 n-ary raid prototype using reed-solomon coding
 
-calling `./raid [n] [m] [all files]`, where `[all files]` consists of n$\times$m paths will overwrite
-the last m files with check data to reconstruct up to m of the n$\times$m files in case of failure
+calling `./raid [n] [m] [all files]`, where `[all files]` consists of n×m paths will overwrite
+the last m files with check data to reconstruct up to m of the n×m files in case of failure
 
 calling `./raid [n] [m] [all files] [bad files]`, where `[bad files]` additionally consists of
 up to m of the paths in `[all files]` will write the reconstructed data to those files
