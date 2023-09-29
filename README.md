@@ -1,4 +1,4 @@
-n-ary raid prototype using reed-solomon coding
+n-ary raid prototype using Reed-Solomon coding
 
 calling `./raid [n] [m] [all files]`, where `[all files]` consists of n×m paths will overwrite
 the last m files with check data to reconstruct up to m of the n×m files in case of failure
