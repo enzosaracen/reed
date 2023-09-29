@@ -11,7 +11,10 @@ for n in $(seq 0 254); do
 done
 
 for n in $(seq 1 254); do
-	for m in $(seq 1 $n); do
+	for m in $(seq 1 $((255 - $n))); do
+		if [ $m -gt $n ]; then
+			break;
+		fi
 		files=$(echo -e $data | sed "$n q" | tr '\n' ' ')
 		files="${files} $(echo -e $check | sed "$m q" | tr '\n' ' ')"
 		./raid $n $m $files

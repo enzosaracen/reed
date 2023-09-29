@@ -1,0 +1,6 @@
+n-ary raid prototype using reed solomon coding
+
+see:
+	http://alamos.math.arizona.edu/RTG16/ECC/raid6.pdf
+	https://web.eecs.utk.edu/~jplank/plank/papers/CS-03-504.pdf
+	https://web.eecs.utk.edu/~jplank/plank/papers/CS-96-332.pdf
